@@ -5,6 +5,7 @@ var gm = require('gm');
 var async = require('async');
 var request = require('request');
 var moment = require('moment');
+var imgur = require('imgur-upload');
 
 var mkdir = function(callback) {
   var path = 'images';
@@ -60,6 +61,20 @@ var getMskPath = function(callback) {
   getImagePath('images/msk.png', 'http://tokyo-ame.jwa.or.jp/map/msk000.png', callback);
 };
 
+var upload = function(path, callback) {
+  imgur.setClientID('YOUR_CLIENT_ID_HERE');
+  imgur.upload(path, function(err, res) {
+    if (err)
+      return callback(err);
+
+    var link = res.data.link;
+    if (!link)
+      return callback(new Error('Invalid Client Id'));
+
+    callback(null, link);
+  });
+};
+
 mkdir(function(err) {
   if (err)
     return console.log(err);
@@ -72,6 +87,7 @@ mkdir(function(err) {
     if (err)
       return console.log(err);
 
+    var path = 'images/current.jpg';
     gm()
       .in('-page', '+0+0')
       .in(results.map)
@@ -79,10 +95,18 @@ mkdir(function(err) {
       .in(results.msk)
       .in('-page', '+0+0')
       .in(results.ame)
+      .quality(90)
       .mosaic()
-      .write('images/current.jpg', function(err) {
+      .write(path, function(err) {
         if (err)
           console.log(err);
+
+        upload(path, function(err, link) {
+          if (err)
+            return console.log(err);
+
+          console.log(link);
+        });
       });
   });
 });

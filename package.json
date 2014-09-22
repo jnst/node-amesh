@@ -11,6 +11,7 @@
   "dependencies": {
     "async": "^0.9.0",
     "gm": "^1.16.0",
+    "imgur-upload": "^0.1.2",
     "moment": "^2.8.3",
     "request": "^2.44.0"
   }
