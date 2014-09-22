@@ -7,106 +7,115 @@ var request = require('request');
 var moment = require('moment');
 var imgur = require('imgur-upload');
 
-var mkdir = function(callback) {
-  var path = 'images';
-  fs.exists(path, function(exists) {
-    if (exists)
-      return callback(null, path);
+/**
+ * Save to local directory ('./images/current.jpg')
+ */
+var save = exports.save = function(callback) {
 
-    fs.mkdir('images', function(err) {
-      if (err)
-        return callback(err);
+  var mkdir = function(done) {
+    var path = 'images';
+    fs.exists(path, function(exists) {
+      if (exists)
+        return done(null, path);
 
-      callback(null, path);
-    });
-  });
-};
-
-var getAmeUrl = function() {
-  var now = moment().format('YYYYMMDDHHmm');
-  var head = now.substring(0, 11);
-  var tail = now.substring(10, 11);
-  tail = ((1 <= +tail) && (+tail <= 5)) ? 0 : 5;
-  return 'http://tokyo-ame.jwa.or.jp/mesh/000/' + head + tail + '.gif';
-};
-
-var getImagePath = function(path, url, callback) {
-  fs.exists(path, function(exists) {
-    if (exists)
-      return callback(null, path);
-
-    request.get({ url: url, encoding: 'binary' }, function(err, response, body) {
-      if (err)
-        return callback(err);
-
-      fs.writeFile(path, body, 'binary', function(err) {
+      fs.mkdir('images', function(err) {
         if (err)
-          return callback(err);
+          return done(err);
 
-        callback(null, path);
+        done(null, path);
       });
     });
-  });
-};
+  };
 
-var getAmePath = function(callback) {
-  getImagePath('images/ame.gif', getAmeUrl(), callback);
-};
+  var getAmeUrl = function() {
+    var now = moment().format('YYYYMMDDHHmm');
+    var head = now.substring(0, 11);
+    var tail = now.substring(10, 11);
+    tail = ((1 <= +tail) && (+tail <= 5)) ? 0 : 5;
+    return 'http://tokyo-ame.jwa.or.jp/mesh/000/' + head + tail + '.gif';
+  };
 
-var getMapPath = function(callback) {
-  getImagePath('images/map.jpg', 'http://tokyo-ame.jwa.or.jp/map/map000.jpg', callback);
-};
+  var getImagePath = function(path, url, done) {
+    fs.exists(path, function(exists) {
+      if (exists)
+        return done(null, path);
 
-var getMskPath = function(callback) {
-  getImagePath('images/msk.png', 'http://tokyo-ame.jwa.or.jp/map/msk000.png', callback);
-};
+      request.get({ url: url, encoding: 'binary' }, function(err, response, body) {
+        if (err)
+          return done(err);
 
-var upload = function(path, callback) {
-  imgur.setClientID('YOUR_CLIENT_ID_HERE');
-  imgur.upload(path, function(err, res) {
-    if (err)
-      return callback(err);
+        fs.writeFile(path, body, 'binary', function(err) {
+          if (err)
+            return done(err);
 
-    var link = res.data.link;
-    if (!link)
-      return callback(new Error('Invalid Client Id'));
+          done(null, path);
+        });
+      });
+    });
+  };
 
-    callback(null, link);
-  });
-};
+  var getAmePath = function(done) {
+    getImagePath('images/ame.gif', getAmeUrl(), done);
+  };
+  var getMapPath = function(done) {
+    getImagePath('images/map.jpg', 'http://tokyo-ame.jwa.or.jp/map/map000.jpg', done);
+  };
+  var getMskPath = function(done) {
+    getImagePath('images/msk.png', 'http://tokyo-ame.jwa.or.jp/map/msk000.png', done);
+  };
 
-mkdir(function(err) {
-  if (err)
-    return console.log(err);
-
-  async.parallel({
-    map: getMapPath,
-    msk: getMskPath,
-    ame: getAmePath
-  }, function(err, results) {
-    if (err)
-      return console.log(err);
-
+  var compositeImages = function(paths, done) {
     var path = 'images/current.jpg';
     gm()
       .in('-page', '+0+0')
-      .in(results.map)
+      .in(paths.map)
       .in('-page', '+0+0')
-      .in(results.msk)
+      .in(paths.msk)
       .in('-page', '+0+0')
-      .in(results.ame)
+      .in(paths.ame)
       .quality(90)
       .mosaic()
       .write(path, function(err) {
         if (err)
-          console.log(err);
+          callback(err);
 
-        upload(path, function(err, link) {
-          if (err)
-            return console.log(err);
-
-          console.log(link);
-        });
+        done(null, path);
       });
+  };
+
+  mkdir(function(err) {
+    if (err)
+      return console.log(err);
+
+    async.parallel({
+      map: getMapPath,
+      msk: getMskPath,
+      ame: getAmePath
+    }, function(err, paths) {
+      if (err)
+        return callback(err);
+
+      compositeImages(paths, callback);
+    });
   });
-});
+
+};
+
+/**
+ * Upload to imagur
+ */
+exports.upload = function(clientId, callback) {
+  save(function(err, path) {
+    imgur.setClientID(clientId);
+    imgur.upload(path, function(err, res) {
+      if (err)
+        return callback(err);
+
+      var data = res.data;
+      if (!data)
+        return callback(new Error('Invalid Client Id'));
+
+      callback(null, data.link);
+    });
+  });
+};
