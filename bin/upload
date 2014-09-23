@@ -1,0 +1,12 @@
+#!/usr/bin/env node
+
+var amesh = require('../');
+
+amesh.upload(function(err, link) {
+  if (err)
+    return console.log(err);
+
+  var time = amesh.getTime('M/D HH:mm');
+  console.log('Amesh Image: ' + time);
+  console.log(link);
+});

@@ -2,12 +2,14 @@
   "name": "node-amesh",
   "version": "0.0.1",
   "description": "Tokyo Amesh",
-  "main": "amesh.js",
+  "main": "index.js",
+  "bin": "bin/upload",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "jnst",
   "license": "MIT",
+  "private": true,
   "dependencies": {
     "async": "^0.9.0",
     "gm": "^1.16.0",
