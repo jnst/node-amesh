@@ -8,6 +8,17 @@ var moment = require('moment');
 var imgur = require('imgur-upload');
 
 /**
+ * Get ame url
+ */
+var getAmeUrl = exports.getAmeUrl = function() {
+  var now = moment().format('YYYYMMDDHHmm');
+  var head = now.substring(0, 11);
+  var tail = now.substring(11, 12);
+  tail = ((1 <= +tail) && (+tail <= 5)) ? 0 : 5;
+  return 'http://tokyo-ame.jwa.or.jp/mesh/000/' + head + tail + '.gif';
+};
+
+/**
  * Save to local directory ('./images/current.jpg')
  */
 var save = exports.save = function(callback) {
@@ -18,7 +29,7 @@ var save = exports.save = function(callback) {
       if (exists)
         return done(null, path);
 
-      fs.mkdir('images', function(err) {
+      fs.mkdir(path, function(err) {
         if (err)
           return done(err);
 
@@ -27,15 +38,7 @@ var save = exports.save = function(callback) {
     });
   };
 
-  var getAmeUrl = function() {
-    var now = moment().format('YYYYMMDDHHmm');
-    var head = now.substring(0, 11);
-    var tail = now.substring(10, 11);
-    tail = ((1 <= +tail) && (+tail <= 5)) ? 0 : 5;
-    return 'http://tokyo-ame.jwa.or.jp/mesh/000/' + head + tail + '.gif';
-  };
-
-  var getImagePath = function(path, url, done) {
+  var saveImage = function(path, url, done) {
     fs.exists(path, function(exists) {
       if (exists)
         return done(null, path);
@@ -55,13 +58,13 @@ var save = exports.save = function(callback) {
   };
 
   var getAmePath = function(done) {
-    getImagePath('images/ame.gif', getAmeUrl(), done);
+    saveImage('images/ame.gif', getAmeUrl(), done);
   };
   var getMapPath = function(done) {
-    getImagePath('images/map.jpg', 'http://tokyo-ame.jwa.or.jp/map/map000.jpg', done);
+    saveImage('images/map.jpg', 'http://tokyo-ame.jwa.or.jp/map/map000.jpg', done);
   };
   var getMskPath = function(done) {
-    getImagePath('images/msk.png', 'http://tokyo-ame.jwa.or.jp/map/msk000.png', done);
+    saveImage('images/msk.png', 'http://tokyo-ame.jwa.or.jp/map/msk000.png', done);
   };
 
   var compositeImages = function(paths, done) {
