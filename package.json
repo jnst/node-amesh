@@ -11,10 +11,10 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "async": "^0.9.0",
-    "gm": "^1.16.0",
+    "gm": "^1.18.1",
     "imgur-upload": "^0.1.2",
-    "moment": "^2.8.3",
-    "request": "^2.44.0"
+    "moment": "^2.10.3",
+    "neo-async": "^1.2.1",
+    "request": "^2.58.0"
   }
 }
